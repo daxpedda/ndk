@@ -1,6 +1,8 @@
 # Unreleased
 
-- Regenerate against NDK 25.0.8775105 with `rust-bindgen 0.59.2`. (#324)
+# 0.5.0 (TODO)
+
+- **Breaking:** Regenerate against NDK 25.1.8937393 with `rust-bindgen 0.63.0`. (#324, #370)
 
 # 0.4.1 (2022-11-23)
 

@@ -142,7 +142,7 @@ impl MediaFormat {
                 self.as_ptr(),
                 name.as_ptr(),
                 value.as_ptr().cast(),
-                value.len() as ffi::size_t,
+                value.len(),
             )
         };
     }
@@ -199,7 +199,7 @@ impl MediaFormat {
     #[cfg(feature = "api-level-28")]
     pub fn set_usize(&self, key: &str, value: usize) {
         let name = CString::new(key).unwrap();
-        unsafe { ffi::AMediaFormat_setSize(self.as_ptr(), name.as_ptr(), value as ffi::size_t) };
+        unsafe { ffi::AMediaFormat_setSize(self.as_ptr(), name.as_ptr(), value) };
     }
 }
 
@@ -303,12 +303,12 @@ impl MediaCodec {
             )
         };
 
-        if result == ffi::AMEDIACODEC_INFO_TRY_AGAIN_LATER as ffi::ssize_t {
+        if result == ffi::AMEDIACODEC_INFO_TRY_AGAIN_LATER as isize {
             Ok(None)
         } else if result >= 0 {
             Ok(Some(InputBuffer {
                 codec: self,
-                index: result as ffi::size_t,
+                index: result as usize,
             }))
         } else {
             NdkMediaError::from_status(ffi::media_status_t(result as _)).map(|()| None)
@@ -330,12 +330,12 @@ impl MediaCodec {
             )
         };
 
-        if result == ffi::AMEDIACODEC_INFO_TRY_AGAIN_LATER as ffi::ssize_t {
+        if result == ffi::AMEDIACODEC_INFO_TRY_AGAIN_LATER as isize {
             Ok(None)
         } else if result >= 0 {
             Ok(Some(OutputBuffer {
                 codec: self,
-                index: result as ffi::size_t,
+                index: result as usize,
                 info,
             }))
         } else {
@@ -384,9 +384,9 @@ impl MediaCodec {
         let status = unsafe {
             ffi::AMediaCodec_queueInputBuffer(
                 self.as_ptr(),
-                buffer.index as ffi::size_t,
+                buffer.index,
                 offset as ffi::off_t,
-                size as ffi::size_t,
+                size,
                 time,
                 flags,
             )
@@ -395,9 +395,8 @@ impl MediaCodec {
     }
 
     pub fn release_output_buffer(&self, buffer: OutputBuffer, render: bool) -> Result<()> {
-        let status = unsafe {
-            ffi::AMediaCodec_releaseOutputBuffer(self.as_ptr(), buffer.index as ffi::size_t, render)
-        };
+        let status =
+            unsafe { ffi::AMediaCodec_releaseOutputBuffer(self.as_ptr(), buffer.index, render) };
         NdkMediaError::from_status(status)
     }
 
@@ -407,11 +406,7 @@ impl MediaCodec {
         timestamp_ns: i64,
     ) -> Result<()> {
         let status = unsafe {
-            ffi::AMediaCodec_releaseOutputBufferAtTime(
-                self.as_ptr(),
-                buffer.index as ffi::size_t,
-                timestamp_ns,
-            )
+            ffi::AMediaCodec_releaseOutputBufferAtTime(self.as_ptr(), buffer.index, timestamp_ns)
         };
         NdkMediaError::from_status(status)
     }
@@ -462,7 +457,7 @@ impl Drop for MediaCodec {
 #[derive(Debug)]
 pub struct InputBuffer<'a> {
     codec: &'a MediaCodec,
-    index: ffi::size_t,
+    index: usize,
 }
 
 impl InputBuffer<'_> {
@@ -480,7 +475,7 @@ impl InputBuffer<'_> {
 #[derive(Debug)]
 pub struct OutputBuffer<'a> {
     codec: &'a MediaCodec,
-    index: ffi::size_t,
+    index: usize,
     info: ffi::AMediaCodecBufferInfo,
 }
 
